@@ -1,12 +1,23 @@
-import React, { useRef } from "react";
+import React from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid, Text } from "@react-three/drei";
 import * as THREE from "three";
 
+interface InputData {
+    [key: string]: string | number | undefined;
+}
+
+interface ConversionResult {
+    miller?: { h: number; k: number; l: number; u: number; v: number; w: number };
+    matrix?: number[][];
+    euler?: { phi1: number; PHI: number; phi2: number };
+    angleAxis?: { theta: number; x: number; y: number; z: number };
+}
+
 interface Props {
     format: string;
-    input: any;
-    outputs: any;
+    input: InputData;
+    outputs: ConversionResult;
 }
 
 function AxesLabels() {
@@ -74,6 +85,7 @@ function MillerPlane({ h, k, l }: { h: number; k: number; l: number }) {
                         count={3}
                         array={new Float32Array(points.flat())}
                         itemSize={3}
+                        args={[new Float32Array(points.flat()), 3]}
                     />
                 </bufferGeometry>
                 <meshStandardMaterial color="#00bcd4" transparent opacity={0.5} side={THREE.DoubleSide} />
@@ -124,7 +136,7 @@ function OrientationArrow({ dir }: { dir: [number, number, number] }) {
     );
 }
 
-const OrientationVisualizer: React.FC<Props> = ({ format, input, outputs }) => {
+const OrientationVisualizer: React.FC<Props> = ({ input }) => {
     // Use Miller indices if available
     const h = Number(input.h), k = Number(input.k), l = Number(input.l);
     const u = Number(input.u), v = Number(input.v), w = Number(input.w);

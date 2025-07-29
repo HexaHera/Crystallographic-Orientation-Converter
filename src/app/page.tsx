@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import OrientationInput from "../components/OrientationInput";
 import OrientationOutputs from "../components/OrientationOutputs";
@@ -10,8 +9,6 @@ import {
   matrixToEuler,
   matrixToAngleAxis,
   eulerToMiller,
-  makeAnglesPositive,
-  normalizeToIntegerVector,
   angleAxisToMatrix,
   eulerToMatrix,
 } from "../utils/orientation";
@@ -23,10 +20,21 @@ const inputFormats = [
   { value: "euler", label: "Euler Angles (ϕ1, Φ, ϕ2)" },
 ];
 
+interface InputData {
+  [key: string]: string;
+}
+
+interface ConversionResult {
+  miller?: { h: number; k: number; l: number; u: number; v: number; w: number };
+  matrix?: number[][];
+  euler?: { phi1: number; PHI: number; phi2: number };
+  angleAxis?: { theta: number; x: number; y: number; z: number };
+}
+
 export default function Home() {
   const [format, setFormat] = useState("miller");
-  const [input, setInput] = useState<any>({});
-  const [outputs, setOutputs] = useState<any>(null);
+  const [input, setInput] = useState<InputData>({});
+  const [outputs, setOutputs] = useState<ConversionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFormatChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -36,7 +44,7 @@ export default function Home() {
     setError(null);
   };
 
-  const handleInputChange = (data: any) => {
+  const handleInputChange = (data: InputData) => {
     setInput(data);
   };
 
@@ -44,15 +52,14 @@ export default function Home() {
     e.preventDefault();
     setError(null);
     try {
-      let result: any = {};
+      let result: ConversionResult = {};
       if (format === "miller") {
         const { h, k, l, u, v, w } = input;
-        const hkluvw = [h, k, l, u, v, w].map(Number);
-        const matrix = millerToMatrix(...hkluvw);
+        const matrix = millerToMatrix(Number(h), Number(k), Number(l), Number(u), Number(v), Number(w));
         const euler = matrixToEuler(matrix);
         const angleAxis = matrixToAngleAxis(matrix);
         result = {
-          miller: { h, k, l, u, v, w },
+          miller: { h: Number(h), k: Number(k), l: Number(l), u: Number(u), v: Number(v), w: Number(w) },
           matrix,
           euler: { phi1: euler.phi1, PHI: euler.PHI, phi2: euler.phi2 },
           angleAxis: { ...angleAxis, theta: Math.abs(angleAxis.theta) },
@@ -100,8 +107,9 @@ export default function Home() {
         };
       }
       setOutputs(result);
-    } catch (err: any) {
-      setError(err.message || "Invalid input");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Invalid input";
+      setError(errorMessage);
     }
   };
 

@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+
+interface InputData {
+    [key: string]: string;
+}
 
 interface Props {
     format: string;
-    value: any;
-    onChange: (data: any) => void;
+    value: InputData;
+    onChange: (data: InputData) => void;
 }
 
-const defaultInputs = {
+const defaultInputs: Record<string, InputData> = {
     miller: { h: "", k: "", l: "", u: "", v: "", w: "" },
     matrix: { m11: "", m12: "", m13: "", m21: "", m22: "", m23: "", m31: "", m32: "", m33: "" },
     angleAxis: { theta: "", x: "", y: "", z: "" },
@@ -17,23 +21,23 @@ function weissZoneLaw(h: number, k: number, l: number, u: number, v: number, w: 
     return h * u + k * v + l * w === 0;
 }
 
-const OrientationInput: React.FC<Props> = ({ format, value, onChange }) => {
-    const [input, setInput] = useState<any>(defaultInputs[format]);
+const OrientationInput: React.FC<Props> = ({ format, onChange }) => {
+    const [input, setInput] = useState<InputData>(defaultInputs[format] || {});
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        setInput(defaultInputs[format]);
+        setInput(defaultInputs[format] || {});
         setError(null);
     }, [format]);
 
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setInput((prev: InputData) => ({ ...prev, [name]: value }));
+    }, []);
+
     useEffect(() => {
         onChange(input);
-    }, [input]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setInput((prev: any) => ({ ...prev, [name]: value }));
-    };
+    }, [input, onChange]);
 
     useEffect(() => {
         if (format === "miller") {

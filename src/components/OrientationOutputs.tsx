@@ -1,7 +1,14 @@
 import React from "react";
 
+interface ConversionResult {
+    miller?: { h: number; k: number; l: number; u: number; v: number; w: number };
+    matrix?: number[][];
+    euler?: { phi1: number; PHI: number; phi2: number };
+    angleAxis?: { theta: number; x: number; y: number; z: number };
+}
+
 interface Props {
-    outputs: any;
+    outputs: ConversionResult;
 }
 
 const formatMatrix = (matrix: number[][]) =>
